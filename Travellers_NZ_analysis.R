@@ -2,7 +2,7 @@
 # Analysis - Traveller Arrivals in NZ
 # Author: Shota Shirai 
 # Date created: 10 Feb 2020
-# Date last update: 11 Mar 2020
+# Date last update: 11 Jun 2020
 # Input: 
 # Output:
 #
@@ -44,10 +44,12 @@ pacman::p_load(readr, tidyr, plotly, ggplot2, dplyr, zoo, DT, data.table, here, 
 # library(here)
 
 # * Load Data  ####################################################################################
+# Data used in this analysis is loaded from four different .csv files
 monthly_overseas_visitor_arrivals <- read_csv(here("data", "monthly-overseas-visitor-arrivals,-november-2009–19.csv"))
 monthly_resident_traveller_arrivals <- read_csv(here("data","monthly-new-zealand-resident-traveller-arrivals,-november-2009–19.csv"))
 overseas_arrivals_by_country <- read_csv(here("data","overseas_visitors_by_country.csv"))
 coordinates_info <- read_csv(here("data","countries.csv"))
+
 # * Analysis - Trend ############################################################################## 
 
 # ** Overseas Visitors ####
@@ -71,23 +73,23 @@ summary_overseas_visitor_annual <- cbind(summary_overseas_visitor_annual, diff_t
 
 # *** Monthly Trend - overseas visitors ###########################################################
 summary_overseas_visitor_monthly <- monthly_overseas_visitor_arrivals %>%
-  mutate(yaer = format(DateTime,"%Y")) %>%
-  mutate(month = format(DateTime,"%m")) %>%
-  mutate(month = as.numeric(month)) %>%
-  filter(year >= 2010 & year <= 2018) %>%
+  mutate(yaer = format(DateTime,"%Y")) %>% # add year
+  mutate(month = format(DateTime,"%m")) %>% # add month
+  mutate(month = as.numeric(month)) %>% # change the format of month
+  filter(year >= 2010 & year <= 2018) %>% # obtain data between 2010 and 2018
   group_by(year) %>%
-  mutate(p = Actual / sum(Actual) *100) %>%
+  mutate(p = Actual / sum(Actual) *100) %>% # Calculate the percentage of the visitors by month
   ungroup()
 
+# Calculate monthly averaged overseas visitors over 10 years 
 average_overseas_visitor_monthly <- summary_overseas_visitor_monthly %>%
   group_by(month) %>%
   dplyr::summarise(p_ave = mean(p),
             year = 'Average, 2010 - 2018'
             )
 
+# output
 summary_overseas_visitor_monthly <- bind_rows(summary_overseas_visitor_monthly, average_overseas_visitor_monthly)
-
-
 
 # ** NZ Resident Travellers  ######################################################################
 # pre-processing - define date format / change column name
@@ -104,27 +106,32 @@ summary_NZres_traveller_annual <- monthly_resident_traveller_arrivals %>%
                    , trend = mean(Seasonally_adjusted) # mean value of seasonally adjusted data 
   )
 
+# obtain change of the visitors from the last year
 diff_trend_NZres = c(NA, diff(summary_NZres_traveller_annual$trend))
 diff_trend_NZres[diff_trend_NZres < 0 ] <- NA
 
+# output
 summary_NZres_traveller_annual <- cbind(summary_NZres_traveller_annual, diff_trend_NZres)
 
 # *** Monthly Trend - NZ Resident Traveller #######################################################
 summary_NZres_traveller_monthly <- monthly_resident_traveller_arrivals %>%
-  mutate(yaer = format(DateTime,"%Y")) %>%
-  mutate(month = format(DateTime,"%m")) %>%
-  mutate(month = as.numeric(month)) %>%
-  filter(year >= 2010 & year <= 2018) %>%
+  mutate(yaer = format(DateTime,"%Y")) %>% # add year
+  mutate(month = format(DateTime,"%m")) %>% # add month
+  mutate(month = as.numeric(month)) %>%  # change the format of month
+  filter(year >= 2010 & year <= 2018) %>% # obtain data between 2010 and 2018
   group_by(year) %>%
-  mutate(p = Actual / sum(Actual) *100) %>%
+  mutate(p = Actual / sum(Actual) *100) %>% # Calculate the percentage of the NZ resident by month
   ungroup()
 
+# Calculate monthly averaged NZ resident traveller over 10 years 
 average_NZres_traveller_monthly <- summary_NZres_traveller_monthly %>%
   group_by(month) %>%
   summarise(p_ave = mean(p),
             year = "Average, 2010 - 2018") 
 
+# output
 summary_NZres_traveller_monthly <- bind_rows(summary_NZres_traveller_monthly, average_NZres_traveller_monthly)
+
 # * Analysis - The number of overseas traveller by country ########################################
 
 # pre-processing - define date format / change column name
@@ -183,6 +190,7 @@ p_annual_overseas <- plot_ly(summary_overseas_visitor_annual, x = ~year, y = ~tr
          , margin = list(l = 50, r = 50, b= 50, t = 150, pad = 4) 
   )
 
+# show a figure
 p_annual_overseas
 
 # ** Monthly Trend - Overseas visitors ############################################################
@@ -217,7 +225,7 @@ p_annual_NZres <- plot_ly(summary_NZres_traveller_annual, x = ~year, y = ~trend
          , legend = list(x = 0, y = 0.9, direction = 'h')
          , margin = list(l = 50, r = 50, b= 50, t = 150, pad = 4) 
   )
-
+# show a figure
 p_annual_NZres
 
 # ** Monthly Trend - NZ residence travellers ######################################################
@@ -231,6 +239,7 @@ p_monthly_NZres <- plot_ly(summary_NZres_traveller_monthly, x = ~month, y = ~p
          , yaxis = list(title = "Persentage of passengers (%)")
   )
 
+# show a figure
 p_monthly_NZres
 
 # ** World map - The number of overseas arrivals by country #######################################
